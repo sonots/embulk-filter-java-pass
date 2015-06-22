@@ -1,0 +1,14 @@
+in:
+  type: random
+  rows: 100000
+  schema:
+    value1: string
+out:
+  type: file
+  path_prefix: ./sample
+  file_ext: .csv
+  formatter:
+    type: csv
+    header_line: true
+    charset: UTF-8
+    newline: CRLF

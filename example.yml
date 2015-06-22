@@ -1,0 +1,18 @@
+in:
+  type: file
+  path_prefix: sample.000.00
+  parser:
+    charset: UTF-8
+    newline: CRLF
+    type: csv
+    delimiter: ','
+    quote: '"'
+    escape: ''
+    null_string: 'NULL'
+    header_line: false
+    columns:
+    - {name: value1, type: string}
+filters:
+  - type: "java-pass"
+out:
+  type: "null"
