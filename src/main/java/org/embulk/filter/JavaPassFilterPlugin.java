@@ -39,28 +39,26 @@ public class JavaPassFilterPlugin implements FilterPlugin {
 
         return new PageOutput() {
             private PageReader pageReader = new PageReader(inputSchema);
+            private PageBuilder pageBuilder = new PageBuilder(Exec.getBufferAllocator(), outputSchema, output);
 
             @Override
             public void finish() {
-                output.finish();
+                pageBuilder.finish();
             }
 
             @Override
             public void close() {
-                output.close();
+                pageBuilder.close();
             }
 
             @Override
             public void add(Page page) {
                 pageReader.setPage(page);
 
-                try (final PageBuilder pageBuilder = new PageBuilder(Exec.getBufferAllocator(), outputSchema, output)) {
-                    ColumnVisitorImpl visitor = new ColumnVisitorImpl(pageBuilder);
-                    while (pageReader.nextRecord()) {
-                        outputSchema.visitColumns(visitor);
-                        pageBuilder.addRecord();
-                    }
-                    pageBuilder.finish();
+                ColumnVisitorImpl visitor = new ColumnVisitorImpl(pageBuilder);
+                while (pageReader.nextRecord()) {
+                    outputSchema.visitColumns(visitor);
+                    pageBuilder.addRecord();
                 }
             }
 
