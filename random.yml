@@ -2,7 +2,9 @@ in:
   type: random
   rows: 100000
   schema:
-    value1: string
+    id: primary_key
+    name: string
+    score: integer
 out:
   type: file
   path_prefix: ./sample

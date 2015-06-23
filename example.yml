@@ -11,8 +11,10 @@ in:
     null_string: 'NULL'
     header_line: false
     columns:
-    - {name: value1, type: string}
+    - {name: id, type: long}
+    - {name: name, type: string}
+    - {name: score, type: long}
 filters:
-  - type: "java-pass"
+  - type: "java_pass"
 out:
   type: "null"

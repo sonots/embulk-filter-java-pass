@@ -15,8 +15,8 @@ import org.embulk.spi.PageOutput;
 import org.embulk.spi.PageReader;
 import org.embulk.spi.Schema;
 
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
+import org.embulk.spi.Column;
+import org.embulk.spi.ColumnVisitor;
 
 public class JavaPassFilterPlugin implements FilterPlugin {
     public interface PluginTask extends Task {
@@ -38,29 +38,82 @@ public class JavaPassFilterPlugin implements FilterPlugin {
         // PluginTask task = taskSource.loadTask(PluginTask.class);
 
         return new PageOutput() {
-            private PageReader reader = new PageReader(inputSchema);
-            private PageBuilder builder = new PageBuilder(Exec.getBufferAllocator(), outputSchema, output);
+            private PageReader pageReader = new PageReader(inputSchema);
 
             @Override
             public void finish() {
                 output.finish();
-                builder.finish();
             }
 
             @Override
             public void close() {
                 output.close();
-                builder.close();
             }
 
             @Override
             public void add(Page page) {
-                reader.setPage(page);
+                pageReader.setPage(page);
 
-                while (reader.nextRecord()) {
-                    String value1 = reader.getString(0);
-                    builder.setString(0, value1);
-                    builder.addRecord();
+                try (final PageBuilder pageBuilder = new PageBuilder(Exec.getBufferAllocator(), outputSchema, output)) {
+                    ColumnVisitorImpl visitor = new ColumnVisitorImpl(pageBuilder);
+                    while (pageReader.nextRecord()) {
+                        outputSchema.visitColumns(visitor);
+                        pageBuilder.addRecord();
+                    }
+                    pageBuilder.finish();
+                }
+            }
+
+            class ColumnVisitorImpl implements ColumnVisitor {
+                private final PageBuilder pageBuilder;
+
+                ColumnVisitorImpl(PageBuilder pageBuilder) {
+                    this.pageBuilder = pageBuilder;
+                }
+
+                @Override
+                public void booleanColumn(Column column) {
+                    if (pageReader.isNull(column)) {
+                        pageBuilder.setNull(column);
+                    } else {
+                        pageBuilder.setBoolean(column, pageReader.getBoolean(column));
+                    }
+                }
+
+                @Override
+                public void longColumn(Column column) {
+                    if (pageReader.isNull(column)) {
+                        pageBuilder.setNull(column);
+                    } else {
+                        pageBuilder.setLong(column, pageReader.getLong(column));
+                    }
+                }
+
+                @Override
+                public void doubleColumn(Column column) {
+                    if (pageReader.isNull(column)) {
+                        pageBuilder.setNull(column);
+                    } else {
+                        pageBuilder.setDouble(column, pageReader.getDouble(column));
+                    }
+                }
+
+                @Override
+                public void stringColumn(Column column) {
+                    if (pageReader.isNull(column)) {
+                        pageBuilder.setNull(column);
+                    } else {
+                        pageBuilder.setString(column, pageReader.getString(column));
+                    }
+                }
+
+                @Override
+                public void timestampColumn(Column column) {
+                    if (pageReader.isNull(column)) {
+                        pageBuilder.setNull(column);
+                    } else {
+                        pageBuilder.setTimestamp(column, pageReader.getTimestamp(column));
+                    }
                 }
             }
         };
