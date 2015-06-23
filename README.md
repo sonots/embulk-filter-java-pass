@@ -1,4 +1,4 @@
-# Pass filter plugin for Embulk
+# Java Pass filter plugin for Embulk
 
 ```
 $ embulk gem install embulk-input-random
